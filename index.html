@@ -2,6 +2,7 @@
 <html lang="fr">
 
 <head>
+
   <meta charset="UTF-8">
 
   <meta
@@ -22,10 +23,509 @@
   >
 
   <link rel="stylesheet" href="style.css">
+
+
+  <!-- ========================================= -->
+  <!-- GOOGLE ANALYTICS -->
+  <!-- ========================================= -->
+
+  <script>
+
+    const GA_MEASUREMENT_ID = "G-J5X8FL641W";
+
+    let analyticsEnabled = false;
+
+
+    function getParisHour() {
+
+      const parts = new Intl.DateTimeFormat(
+        "fr-FR",
+        {
+          timeZone: "Europe/Paris",
+          hour: "2-digit",
+          hour12: false
+        }
+      ).formatToParts(new Date());
+
+      const hourPart = parts.find(
+        part => part.type === "hour"
+      );
+
+      return parseInt(hourPart.value, 10);
+    }
+
+
+    function getParisDate() {
+
+      const parts = new Intl.DateTimeFormat(
+        "fr-FR",
+        {
+          timeZone: "Europe/Paris",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit"
+        }
+      ).formatToParts(new Date());
+
+      const year = parts.find(
+        part => part.type === "year"
+      ).value;
+
+      const month = parts.find(
+        part => part.type === "month"
+      ).value;
+
+      const day = parts.find(
+        part => part.type === "day"
+      ).value;
+
+      return year + "-" + month + "-" + day;
+    }
+
+
+    function getServicePeriod(hour) {
+
+      if (hour >= 12 && hour < 14) {
+        return "12h-14h";
+      }
+
+      if (hour >= 20 && hour < 22) {
+        return "20h-22h";
+      }
+
+      if (hour >= 11 && hour < 15) {
+        return "autre_midi";
+      }
+
+      if (hour >= 18 && hour < 23) {
+        return "autre_soir";
+      }
+
+      return "hors_service";
+    }
+
+
+    function loadGoogleAnalytics() {
+
+      if (analyticsEnabled) {
+        return;
+      }
+
+      analyticsEnabled = true;
+
+
+      const googleScript =
+        document.createElement("script");
+
+      googleScript.async = true;
+
+      googleScript.src =
+        "https://www.googletagmanager.com/gtag/js?id="
+        + GA_MEASUREMENT_ID;
+
+      document.head.appendChild(
+        googleScript
+      );
+
+
+      window.dataLayer =
+        window.dataLayer || [];
+
+
+      window.gtag = function() {
+        dataLayer.push(arguments);
+      };
+
+
+      gtag(
+        "js",
+        new Date()
+      );
+
+
+      gtag(
+        "config",
+        GA_MEASUREMENT_ID
+      );
+
+
+      const hour =
+        getParisHour();
+
+
+      gtag(
+        "event",
+        "site_visit",
+        {
+
+          visit_hour:
+            String(hour).padStart(2, "0") + "h",
+
+          service_period:
+            getServicePeriod(hour),
+
+          local_date:
+            getParisDate(),
+
+          restaurant:
+            "Chez Marion",
+
+          page_type:
+            "menu_digital"
+
+        }
+      );
+
+    }
+
+
+    function trackEvent(
+      eventName,
+      label,
+      destination
+    ) {
+
+      if (
+        !analyticsEnabled ||
+        typeof gtag !== "function"
+      ) {
+        return;
+      }
+
+      const hour =
+        getParisHour();
+
+
+      gtag(
+        "event",
+        eventName,
+        {
+
+          link_label:
+            label || "",
+
+          destination_url:
+            destination || "",
+
+          visit_hour:
+            String(hour).padStart(2, "0") + "h",
+
+          service_period:
+            getServicePeriod(hour),
+
+          restaurant:
+            "Chez Marion"
+
+        }
+      );
+
+    }
+
+
+    document.addEventListener(
+      "DOMContentLoaded",
+      function() {
+
+        const banner =
+          document.getElementById(
+            "analytics-consent"
+          );
+
+        const consent =
+          localStorage.getItem(
+            "chez_marion_analytics_consent"
+          );
+
+
+        if (consent === "accepted") {
+
+          banner.style.display =
+            "none";
+
+          loadGoogleAnalytics();
+
+        }
+
+        else if (consent === "refused") {
+
+          banner.style.display =
+            "none";
+
+        }
+
+        else {
+
+          banner.style.display =
+            "flex";
+
+        }
+
+
+        document
+          .getElementById(
+            "analytics-accept"
+          )
+          .addEventListener(
+            "click",
+            function() {
+
+              localStorage.setItem(
+                "chez_marion_analytics_consent",
+                "accepted"
+              );
+
+              banner.style.display =
+                "none";
+
+              loadGoogleAnalytics();
+
+            }
+          );
+
+
+        document
+          .getElementById(
+            "analytics-refuse"
+          )
+          .addEventListener(
+            "click",
+            function() {
+
+              localStorage.setItem(
+                "chez_marion_analytics_consent",
+                "refused"
+              );
+
+              banner.style.display =
+                "none";
+
+            }
+          );
+
+
+        const manageButton =
+          document.getElementById(
+            "manage-analytics"
+          );
+
+
+        if (manageButton) {
+
+          manageButton.addEventListener(
+            "click",
+            function() {
+
+              localStorage.removeItem(
+                "chez_marion_analytics_consent"
+              );
+
+              location.reload();
+
+            }
+          );
+
+        }
+
+
+        document
+          .querySelectorAll("[data-track]")
+          .forEach(
+            function(element) {
+
+              element.addEventListener(
+                "click",
+                function() {
+
+                  trackEvent(
+                    element.dataset.track,
+                    element.dataset.label,
+                    element.href
+                  );
+
+                }
+              );
+
+            }
+          );
+
+      }
+    );
+
+  </script>
+
+
+
+  <!-- ========================================= -->
+  <!-- BANDEAU STATISTIQUES -->
+  <!-- ========================================= -->
+
+  <style>
+
+    .analytics-consent {
+
+      display: none;
+
+      position: fixed;
+
+      left: 20px;
+      right: 20px;
+      bottom: 20px;
+
+      z-index: 99999;
+
+      max-width: 850px;
+
+      margin: auto;
+
+      padding: 20px;
+
+      background: #081721;
+
+      border: 1px solid #d79a46;
+
+      border-radius: 12px;
+
+      box-shadow:
+        0 8px 35px
+        rgba(0, 0, 0, 0.45);
+
+      align-items: center;
+
+      justify-content: space-between;
+
+      gap: 20px;
+
+      color: #f4eee4;
+
+    }
+
+
+    .analytics-consent-text {
+
+      flex: 1;
+
+    }
+
+
+    .analytics-consent h3 {
+
+      margin: 0 0 6px 0;
+
+      color: #e8b766;
+
+      font-family:
+        "Cormorant Garamond",
+        serif;
+
+      font-size: 1.4rem;
+
+    }
+
+
+    .analytics-consent p {
+
+      margin: 0;
+
+      font-size: 0.82rem;
+
+      line-height: 1.5;
+
+      color: #d3d3d3;
+
+    }
+
+
+    .analytics-buttons {
+
+      display: flex;
+
+      gap: 10px;
+
+    }
+
+
+    .analytics-buttons button {
+
+      padding: 11px 18px;
+
+      border-radius: 7px;
+
+      cursor: pointer;
+
+      font-weight: 700;
+
+    }
+
+
+    #analytics-accept {
+
+      background: #d79a46;
+
+      border: 1px solid #d79a46;
+
+      color: #06131d;
+
+    }
+
+
+    #analytics-refuse {
+
+      background: transparent;
+
+      border: 1px solid #d79a46;
+
+      color: #e8b766;
+
+    }
+
+
+    .manage-analytics {
+
+      margin-top: 12px;
+
+      border: 0;
+
+      background: transparent;
+
+      color: #aaaaaa;
+
+      text-decoration: underline;
+
+      cursor: pointer;
+
+      font-size: 0.75rem;
+
+    }
+
+
+    @media(max-width:700px) {
+
+      .analytics-consent {
+
+        flex-direction: column;
+
+        align-items: stretch;
+
+      }
+
+      .analytics-buttons {
+
+        display: grid;
+
+        grid-template-columns: 1fr 1fr;
+
+      }
+
+    }
+
+  </style>
+
 </head>
 
 
+
 <body>
+
 
 <!-- ========================================= -->
 <!-- HEADER -->
@@ -35,7 +535,10 @@
 
   <div class="header-inner">
 
-    <a href="#accueil" class="brand">
+    <a
+      href="#accueil"
+      class="brand"
+    >
 
       <span class="brand-script">
         Chez Marion
@@ -68,6 +571,10 @@
 
       <a href="#menu">
         Menu
+      </a>
+
+      <a href="#offre">
+        Offre
       </a>
 
     </nav>
@@ -161,7 +668,7 @@
 
 <section class="menu-section">
 
-  <div class="menu-grid">
+<div class="menu-grid">
 
 
 <!-- ========================================= -->
@@ -204,20 +711,23 @@
       </div>
 
       <div class="product-actions">
+
         <strong>8,50 €</strong>
 
         <a
-          href="#"
+          href="https://docs.google.com/document/d/1fND7eUcHiqPB1_oqVmILlqTASy1UIFkp7m6PXCwYiDo/edit?usp=drivesdk"
           target="_blank"
           rel="noopener"
           class="detail-button"
+          data-track="detail_click"
+          data-label="Velouté de potimarron"
         >
           Détail
         </a>
+
       </div>
 
     </div>
-
 
 
     <div class="product">
@@ -228,20 +738,23 @@
       </div>
 
       <div class="product-actions">
+
         <strong>9,50 €</strong>
 
         <a
-          href="#"
+          href="https://docs.google.com/document/d/1fND7eUcHiqPB1_oqVmILlqTASy1UIFkp7m6PXCwYiDo/edit?usp=drivesdk"
           target="_blank"
           rel="noopener"
           class="detail-button"
+          data-track="detail_click"
+          data-label="Œuf parfait"
         >
           Détail
         </a>
+
       </div>
 
     </div>
-
 
 
     <div class="product">
@@ -252,20 +765,23 @@
       </div>
 
       <div class="product-actions">
+
         <strong>11,50 €</strong>
 
         <a
-          href="#"
+          href="https://docs.google.com/document/d/1fND7eUcHiqPB1_oqVmILlqTASy1UIFkp7m6PXCwYiDo/edit?usp=drivesdk"
           target="_blank"
           rel="noopener"
           class="detail-button"
+          data-track="detail_click"
+          data-label="Carpaccio de bœuf"
         >
           Détail
         </a>
+
       </div>
 
     </div>
-
 
 
     <div class="product">
@@ -276,20 +792,23 @@
       </div>
 
       <div class="product-actions">
+
         <strong>10,50 €</strong>
 
         <a
-          href="#"
+          href="https://docs.google.com/document/d/1fND7eUcHiqPB1_oqVmILlqTASy1UIFkp7m6PXCwYiDo/edit?usp=drivesdk"
           target="_blank"
           rel="noopener"
           class="detail-button"
+          data-track="detail_click"
+          data-label="Salade César"
         >
           Détail
         </a>
+
       </div>
 
     </div>
-
 
 
     <div class="product">
@@ -300,20 +819,23 @@
       </div>
 
       <div class="product-actions">
+
         <strong>9,80 €</strong>
 
         <a
-          href="#"
+          href="https://docs.google.com/document/d/1fND7eUcHiqPB1_oqVmILlqTASy1UIFkp7m6PXCwYiDo/edit?usp=drivesdk"
           target="_blank"
           rel="noopener"
           class="detail-button"
+          data-track="detail_click"
+          data-label="Burrata"
         >
           Détail
         </a>
+
       </div>
 
     </div>
-
 
 
     <div class="product">
@@ -324,20 +846,23 @@
       </div>
 
       <div class="product-actions">
+
         <strong>12,50 €</strong>
 
         <a
-          href="#"
+          href="https://docs.google.com/document/d/1fND7eUcHiqPB1_oqVmILlqTASy1UIFkp7m6PXCwYiDo/edit?usp=drivesdk"
           target="_blank"
           rel="noopener"
           class="detail-button"
+          data-track="detail_click"
+          data-label="Tartare de saumon"
         >
           Détail
         </a>
+
       </div>
 
     </div>
-
 
 
     <div class="product">
@@ -348,20 +873,23 @@
       </div>
 
       <div class="product-actions">
+
         <strong>13,90 €</strong>
 
         <a
-          href="#"
+          href="https://docs.google.com/document/d/1fND7eUcHiqPB1_oqVmILlqTASy1UIFkp7m6PXCwYiDo/edit?usp=drivesdk"
           target="_blank"
           rel="noopener"
           class="detail-button"
+          data-track="detail_click"
+          data-label="Assiette de charcuterie"
         >
           Détail
         </a>
+
       </div>
 
     </div>
-
 
   </div>
 
@@ -418,20 +946,23 @@
       </div>
 
       <div class="product-actions">
+
         <strong>21,50 €</strong>
 
         <a
-          href="#"
+          href="https://docs.google.com/document/d/1fND7eUcHiqPB1_oqVmILlqTASy1UIFkp7m6PXCwYiDo/edit?usp=drivesdk"
           target="_blank"
           rel="noopener"
           class="detail-button"
+          data-track="detail_click"
+          data-label="Magret de canard"
         >
           Détail
         </a>
+
       </div>
 
     </div>
-
 
 
     <div class="product">
@@ -442,20 +973,23 @@
       </div>
 
       <div class="product-actions">
+
         <strong>21,50 €</strong>
 
         <a
-          href="#"
+          href="https://docs.google.com/document/d/1fND7eUcHiqPB1_oqVmILlqTASy1UIFkp7m6PXCwYiDo/edit?usp=drivesdk"
           target="_blank"
           rel="noopener"
           class="detail-button"
+          data-track="detail_click"
+          data-label="Dos de cabillaud rôti"
         >
           Détail
         </a>
+
       </div>
 
     </div>
-
 
 
     <div class="product">
@@ -466,20 +1000,23 @@
       </div>
 
       <div class="product-actions">
+
         <strong>19,50 €</strong>
 
         <a
-          href="#"
+          href="https://docs.google.com/document/d/1fND7eUcHiqPB1_oqVmILlqTASy1UIFkp7m6PXCwYiDo/edit?usp=drivesdk"
           target="_blank"
           rel="noopener"
           class="detail-button"
+          data-track="detail_click"
+          data-label="Tartare de bœuf"
         >
           Détail
         </a>
+
       </div>
 
     </div>
-
 
 
     <div class="product">
@@ -490,20 +1027,23 @@
       </div>
 
       <div class="product-actions">
+
         <strong>24,00 €</strong>
 
         <a
-          href="#"
+          href="https://docs.google.com/document/d/1fND7eUcHiqPB1_oqVmILlqTASy1UIFkp7m6PXCwYiDo/edit?usp=drivesdk"
           target="_blank"
           rel="noopener"
           class="detail-button"
+          data-track="detail_click"
+          data-label="Entrecôte frites"
         >
           Détail
         </a>
+
       </div>
 
     </div>
-
 
 
     <div class="product">
@@ -514,20 +1054,23 @@
       </div>
 
       <div class="product-actions">
+
         <strong>18,50 €</strong>
 
         <a
-          href="#"
+          href="https://docs.google.com/document/d/1fND7eUcHiqPB1_oqVmILlqTASy1UIFkp7m6PXCwYiDo/edit?usp=drivesdk"
           target="_blank"
           rel="noopener"
           class="detail-button"
+          data-track="detail_click"
+          data-label="Suprême de poulet"
         >
           Détail
         </a>
+
       </div>
 
     </div>
-
 
 
     <div class="product">
@@ -538,20 +1081,23 @@
       </div>
 
       <div class="product-actions">
+
         <strong>17,50 €</strong>
 
         <a
-          href="#"
+          href="https://docs.google.com/document/d/1fND7eUcHiqPB1_oqVmILlqTASy1UIFkp7m6PXCwYiDo/edit?usp=drivesdk"
           target="_blank"
           rel="noopener"
           class="detail-button"
+          data-track="detail_click"
+          data-label="Burger maison"
         >
           Détail
         </a>
+
       </div>
 
     </div>
-
 
 
     <div class="product">
@@ -562,20 +1108,23 @@
       </div>
 
       <div class="product-actions">
+
         <strong>16,90 €</strong>
 
         <a
-          href="#"
+          href="https://docs.google.com/document/d/1fND7eUcHiqPB1_oqVmILlqTASy1UIFkp7m6PXCwYiDo/edit?usp=drivesdk"
           target="_blank"
           rel="noopener"
           class="detail-button"
+          data-track="detail_click"
+          data-label="Risotto aux champignons"
         >
           Détail
         </a>
+
       </div>
 
     </div>
-
 
   </div>
 
@@ -632,8 +1181,20 @@
       </div>
 
       <div class="product-actions">
+
         <strong>8,50 €</strong>
-        <a href="#" target="_blank" rel="noopener" class="detail-button">Détail</a>
+
+        <a
+          href="https://docs.google.com/document/d/1fND7eUcHiqPB1_oqVmILlqTASy1UIFkp7m6PXCwYiDo/edit?usp=drivesdk"
+          target="_blank"
+          rel="noopener"
+          class="detail-button"
+          data-track="detail_click"
+          data-label="Moelleux au chocolat"
+        >
+          Détail
+        </a>
+
       </div>
 
     </div>
@@ -646,8 +1207,20 @@
       </div>
 
       <div class="product-actions">
+
         <strong>7,50 €</strong>
-        <a href="#" target="_blank" rel="noopener" class="detail-button">Détail</a>
+
+        <a
+          href="https://docs.google.com/document/d/1fND7eUcHiqPB1_oqVmILlqTASy1UIFkp7m6PXCwYiDo/edit?usp=drivesdk"
+          target="_blank"
+          rel="noopener"
+          class="detail-button"
+          data-track="detail_click"
+          data-label="Crème brûlée"
+        >
+          Détail
+        </a>
+
       </div>
 
     </div>
@@ -660,8 +1233,20 @@
       </div>
 
       <div class="product-actions">
+
         <strong>8,00 €</strong>
-        <a href="#" target="_blank" rel="noopener" class="detail-button">Détail</a>
+
+        <a
+          href="https://docs.google.com/document/d/1fND7eUcHiqPB1_oqVmILlqTASy1UIFkp7m6PXCwYiDo/edit?usp=drivesdk"
+          target="_blank"
+          rel="noopener"
+          class="detail-button"
+          data-track="detail_click"
+          data-label="Tiramisu maison"
+        >
+          Détail
+        </a>
+
       </div>
 
     </div>
@@ -674,8 +1259,20 @@
       </div>
 
       <div class="product-actions">
+
         <strong>8,90 €</strong>
-        <a href="#" target="_blank" rel="noopener" class="detail-button">Détail</a>
+
+        <a
+          href="https://docs.google.com/document/d/1fND7eUcHiqPB1_oqVmILlqTASy1UIFkp7m6PXCwYiDo/edit?usp=drivesdk"
+          target="_blank"
+          rel="noopener"
+          class="detail-button"
+          data-track="detail_click"
+          data-label="Profiteroles"
+        >
+          Détail
+        </a>
+
       </div>
 
     </div>
@@ -688,8 +1285,20 @@
       </div>
 
       <div class="product-actions">
+
         <strong>7,80 €</strong>
-        <a href="#" target="_blank" rel="noopener" class="detail-button">Détail</a>
+
+        <a
+          href="https://docs.google.com/document/d/1fND7eUcHiqPB1_oqVmILlqTASy1UIFkp7m6PXCwYiDo/edit?usp=drivesdk"
+          target="_blank"
+          rel="noopener"
+          class="detail-button"
+          data-track="detail_click"
+          data-label="Tarte citron meringuée"
+        >
+          Détail
+        </a>
+
       </div>
 
     </div>
@@ -702,8 +1311,20 @@
       </div>
 
       <div class="product-actions">
+
         <strong>7,50 €</strong>
-        <a href="#" target="_blank" rel="noopener" class="detail-button">Détail</a>
+
+        <a
+          href="https://docs.google.com/document/d/1fND7eUcHiqPB1_oqVmILlqTASy1UIFkp7m6PXCwYiDo/edit?usp=drivesdk"
+          target="_blank"
+          rel="noopener"
+          class="detail-button"
+          data-track="detail_click"
+          data-label="Panna cotta fruits rouges"
+        >
+          Détail
+        </a>
+
       </div>
 
     </div>
@@ -716,12 +1337,23 @@
       </div>
 
       <div class="product-actions">
+
         <strong>9,50 €</strong>
-        <a href="#" target="_blank" rel="noopener" class="detail-button">Détail</a>
+
+        <a
+          href="https://docs.google.com/document/d/1fND7eUcHiqPB1_oqVmILlqTASy1UIFkp7m6PXCwYiDo/edit?usp=drivesdk"
+          target="_blank"
+          rel="noopener"
+          class="detail-button"
+          data-track="detail_click"
+          data-label="Café gourmand"
+        >
+          Détail
+        </a>
+
       </div>
 
     </div>
-
 
   </div>
 
@@ -778,8 +1410,20 @@
       </div>
 
       <div class="product-actions">
+
         <strong>5,50 €</strong>
-        <a href="#" target="_blank" rel="noopener" class="detail-button">Détail</a>
+
+        <a
+          href="https://docs.google.com/document/d/1fND7eUcHiqPB1_oqVmILlqTASy1UIFkp7m6PXCwYiDo/edit?usp=drivesdk"
+          target="_blank"
+          rel="noopener"
+          class="detail-button"
+          data-track="detail_click"
+          data-label="Verre de vin"
+        >
+          Détail
+        </a>
+
       </div>
 
     </div>
@@ -793,8 +1437,20 @@
       </div>
 
       <div class="product-actions">
+
         <strong>4,50 €</strong>
-        <a href="#" target="_blank" rel="noopener" class="detail-button">Détail</a>
+
+        <a
+          href="https://docs.google.com/document/d/1fND7eUcHiqPB1_oqVmILlqTASy1UIFkp7m6PXCwYiDo/edit?usp=drivesdk"
+          target="_blank"
+          rel="noopener"
+          class="detail-button"
+          data-track="detail_click"
+          data-label="Bière pression"
+        >
+          Détail
+        </a>
+
       </div>
 
     </div>
@@ -807,8 +1463,20 @@
       </div>
 
       <div class="product-actions">
+
         <strong>2,20 €</strong>
-        <a href="#" target="_blank" rel="noopener" class="detail-button">Détail</a>
+
+        <a
+          href="https://docs.google.com/document/d/1fND7eUcHiqPB1_oqVmILlqTASy1UIFkp7m6PXCwYiDo/edit?usp=drivesdk"
+          target="_blank"
+          rel="noopener"
+          class="detail-button"
+          data-track="detail_click"
+          data-label="Café Décaféiné"
+        >
+          Détail
+        </a>
+
       </div>
 
     </div>
@@ -821,8 +1489,20 @@
       </div>
 
       <div class="product-actions">
+
         <strong>3,50 €</strong>
-        <a href="#" target="_blank" rel="noopener" class="detail-button">Détail</a>
+
+        <a
+          href="https://docs.google.com/document/d/1fND7eUcHiqPB1_oqVmILlqTASy1UIFkp7m6PXCwYiDo/edit?usp=drivesdk"
+          target="_blank"
+          rel="noopener"
+          class="detail-button"
+          data-track="detail_click"
+          data-label="Cappuccino"
+        >
+          Détail
+        </a>
+
       </div>
 
     </div>
@@ -835,8 +1515,20 @@
       </div>
 
       <div class="product-actions">
+
         <strong>3,80 €</strong>
-        <a href="#" target="_blank" rel="noopener" class="detail-button">Détail</a>
+
+        <a
+          href="https://docs.google.com/document/d/1fND7eUcHiqPB1_oqVmILlqTASy1UIFkp7m6PXCwYiDo/edit?usp=drivesdk"
+          target="_blank"
+          rel="noopener"
+          class="detail-button"
+          data-track="detail_click"
+          data-label="Chocolat chaud"
+        >
+          Détail
+        </a>
+
       </div>
 
     </div>
@@ -849,8 +1541,20 @@
       </div>
 
       <div class="product-actions">
+
         <strong>3,00 €</strong>
-        <a href="#" target="_blank" rel="noopener" class="detail-button">Détail</a>
+
+        <a
+          href="https://docs.google.com/document/d/1fND7eUcHiqPB1_oqVmILlqTASy1UIFkp7m6PXCwYiDo/edit?usp=drivesdk"
+          target="_blank"
+          rel="noopener"
+          class="detail-button"
+          data-track="detail_click"
+          data-label="Eau minérale"
+        >
+          Détail
+        </a>
+
       </div>
 
     </div>
@@ -863,12 +1567,23 @@
       </div>
 
       <div class="product-actions">
+
         <strong>4,00 €</strong>
-        <a href="#" target="_blank" rel="noopener" class="detail-button">Détail</a>
+
+        <a
+          href="https://docs.google.com/document/d/1fND7eUcHiqPB1_oqVmILlqTASy1UIFkp7m6PXCwYiDo/edit?usp=drivesdk"
+          target="_blank"
+          rel="noopener"
+          class="detail-button"
+          data-track="detail_click"
+          data-label="Jus de fruits"
+        >
+          Détail
+        </a>
+
       </div>
 
     </div>
-
 
   </div>
 
@@ -884,7 +1599,7 @@
 </article>
 
 
-  </div>
+</div>
 
 </section>
 
@@ -938,7 +1653,6 @@
     </article>
 
 
-
     <article class="formula-card">
 
       <span class="formula-icon">
@@ -962,7 +1676,6 @@
       </strong>
 
     </article>
-
 
 
     <article class="formula-card">
@@ -999,23 +1712,24 @@
 
 
 <!-- ========================================= -->
-<!-- ALLERGENES + ORIGINE -->
+<!-- INFORMATIONS -->
 <!-- ========================================= -->
 
 <section class="information-section">
 
 
   <a
-    href="#"
+    href="https://docs.google.com/spreadsheets/d/1zAfNvLYI2Zx0lvQK31719qY59NxAuOFRnlPqKjyzeb0/edit?usp=drivesdk"
     target="_blank"
     rel="noopener"
     class="information-card"
+    data-track="information_click"
+    data-label="14 allergènes"
   >
 
     <div class="information-icon">
       🌾
     </div>
-
 
     <div>
 
@@ -1024,12 +1738,11 @@
       </h2>
 
       <p>
-        Consultez la liste des allergènes
+        Consultez la liste des 14 allergènes
         présents dans nos plats.
       </p>
 
     </div>
-
 
     <span class="information-arrow">
       ›
@@ -1040,16 +1753,17 @@
 
 
   <a
-    href="#"
+    href="https://drive.google.com/file/d/1Ij7K0q75Y7CqOsJeeqejuyRlv-v-0GvL/view?usp=drivesdk"
     target="_blank"
     rel="noopener"
     class="information-card"
+    data-track="information_click"
+    data-label="Origine des viandes"
   >
 
     <div class="information-icon">
       🐄
     </div>
-
 
     <div>
 
@@ -1064,6 +1778,74 @@
 
     </div>
 
+    <span class="information-arrow">
+      ›
+    </span>
+
+  </a>
+
+
+
+  <a
+    href="https://docs.google.com/document/d/1fND7eUcHiqPB1_oqVmILlqTASy1UIFkp7m6PXCwYiDo/edit?usp=drivesdk"
+    target="_blank"
+    rel="noopener"
+    class="information-card"
+    data-track="information_click"
+    data-label="Valeurs nutritionnelles"
+  >
+
+    <div class="information-icon">
+      📊
+    </div>
+
+    <div>
+
+      <h2>
+        Valeurs nutritionnelles
+      </h2>
+
+      <p>
+        Consultez les informations nutritionnelles
+        de nos produits.
+      </p>
+
+    </div>
+
+    <span class="information-arrow">
+      ›
+    </span>
+
+  </a>
+
+
+
+  <a
+    id="offre"
+    href="https://drive.google.com/file/d/1jMIN5xag4ZWhb4qEW1Fpx5QW8lIcJVfK/view?usp=drivesdk"
+    target="_blank"
+    rel="noopener"
+    class="information-card"
+    data-track="offer_click"
+    data-label="Offre du moment"
+  >
+
+    <div class="information-icon">
+      🎁
+    </div>
+
+    <div>
+
+      <h2>
+        Offre du moment
+      </h2>
+
+      <p>
+        Découvrez l'offre actuellement
+        proposée par Chez Marion.
+      </p>
+
+    </div>
 
     <span class="information-arrow">
       ›
@@ -1084,10 +1866,12 @@
 
 
   <a
-    href="#"
+    href="https://www.facebook.com/share/1B6371WrXg/"
     target="_blank"
     rel="noopener"
     class="social-button facebook"
+    data-track="social_click"
+    data-label="Facebook"
   >
 
     <span>
@@ -1101,10 +1885,12 @@
 
 
   <a
-    href="#"
+    href="https://www.instagram.com/chez_marion_confiserie_?igsh=MWtkd25iYnEybmJmZg=="
     target="_blank"
     rel="noopener"
     class="social-button instagram"
+    data-track="social_click"
+    data-label="Instagram"
   >
 
     <span>
@@ -1119,9 +1905,8 @@
 
   <a
     href="#"
-    target="_blank"
-    rel="noopener"
     class="social-button tiktok"
+    onclick="return false;"
   >
 
     <span>
@@ -1136,11 +1921,14 @@
 
   <div class="google-review-wrapper">
 
+
     <a
-      href="#"
+      href="https://www.google.com/search?client=tablet-android-lenovo-rvo3&amp;hs=295p&amp;sca_esv=9809b91374a36a02&amp;cs=0&amp;sxsrf=ANbL-n7hnWpVm3joojbsEb9soiN_S4kLMQ:1781769708108&amp;q=chez+marion+avis&amp;ludocid=3176487173827865349&amp;ibp=gwp;0,7&amp;hl=fr-FR&amp;sa=X&amp;ved=2ahUKEwibyZe0qZCVAxXaV6QEHUyCD5IQ9fQKegQIHxAG&amp;biw=1280&amp;bih=800&amp;dpr=2#lkt=LocalPoiReviews&amp;lpg=cid:CgIgAQ%3D%3D"
       target="_blank"
       rel="noopener"
       class="social-button google-review"
+      data-track="google_review_click"
+      data-label="Avis Google"
     >
 
       <span>
@@ -1157,6 +1945,7 @@
       <br>
       une boisson chaude offerte
     </p>
+
 
   </div>
 
@@ -1215,6 +2004,15 @@
         Merci pour votre fidélité !
       </p>
 
+
+      <button
+        id="manage-analytics"
+        class="manage-analytics"
+        type="button"
+      >
+        Gérer les statistiques
+      </button>
+
     </div>
 
 
@@ -1233,6 +2031,56 @@
 
 
 </footer>
+
+
+
+<!-- ========================================= -->
+<!-- CONSENTEMENT ANALYTICS -->
+<!-- ========================================= -->
+
+<div
+  id="analytics-consent"
+  class="analytics-consent"
+>
+
+
+  <div class="analytics-consent-text">
+
+    <h3>
+      Statistiques de fréquentation
+    </h3>
+
+    <p>
+      Nous utilisons un outil de mesure d'audience
+      afin de connaître de manière agrégée
+      la fréquentation du menu, les horaires
+      de consultation et les rubriques utilisées.
+    </p>
+
+  </div>
+
+
+  <div class="analytics-buttons">
+
+    <button
+      id="analytics-refuse"
+      type="button"
+    >
+      Refuser
+    </button>
+
+
+    <button
+      id="analytics-accept"
+      type="button"
+    >
+      Accepter
+    </button>
+
+  </div>
+
+
+</div>
 
 
 </body>
